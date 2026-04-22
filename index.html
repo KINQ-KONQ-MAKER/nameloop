@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NameLoop</title>
+<style>
+  :root {
+    --bg: #f5f4ef;
+    --surface: #ffffff;
+    --border: #e2e1db;
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --hint: #9e9e98;
+    --accent: #d97757;
+    --accent-light: #f5e8e3;
+    --accent-dark: #b85f3f;
+    --blue: #1a56c4;
+    --blue-light: #e8eef9;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: white;
+    font-style: italic;
+    font-family: Georgia, serif;
+    letter-spacing: -1px;
+  }
+  .logo-text {
+    font-size: 18px;
+    font-weight: normal;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .logo-text span { color: var(--accent); }
+  .version {
+    font-size: 11px;
+    color: var(--hint);
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 1rem;
+  }
+
+  /* ── INPUT SECTION ── */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--hint);
+    margin-bottom: 10px;
+    font-family: 'Courier New', monospace;
+  }
+  .name-input {
+    width: 100%;
+    font-size: 22px;
+    font-family: Georgia, serif;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    padding: 0;
+    line-height: 1.3;
+  }
+  .name-input::placeholder { color: var(--hint); }
+  .input-divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 12px 0;
+  }
+  .parsed-row {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+  .parsed-chip {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+  .parsed-chip strong { color: var(--accent); font-weight: normal; }
+
+  /* ── FORMATS GRID ── */
+  .formats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 0.5rem;
+  }
+  .format-btn {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .12s;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .format-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+  .format-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    border-width: 1px;
+  }
+  .format-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+  .format-preview {
+    font-size: 13px;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .format-preview.accent { color: var(--accent); }
+
+  /* ── RESULT AREA ── */
+  .result-area { margin-top: 1rem; }
+  .result-box {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .result-value {
+    font-size: 26px;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    word-break: break-all;
+  }
+  .copy-btn {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    transition: background .12s, transform .1s;
+  }
+  .copy-btn:hover { background: var(--accent-dark); }
+  .copy-btn:active { transform: scale(0.97); }
+  .copy-btn.copied {
+    background: #3a7d44;
+  }
+
+  /* ── ALL RESULTS ── */
+  .all-results {
+    margin-top: 1rem;
+  }
+  .all-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    gap: 12px;
+  }
+  .all-row:last-child { border-bottom: none; }
+  .all-label {
+    font-size: 11px;
+    color: var(--hint);
+    font-family: 'Courier New', monospace;
+    min-width: 90px;
+  }
+  .all-value {
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    flex: 1;
+  }
+  .copy-small {
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: Georgia, serif;
+    transition: all .1s;
+    flex-shrink: 0;
+  }
+  .copy-small:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-small.copied { color: #3a7d44; border-color: #3a7d44; }
+
+  /* ── HISTORY ── */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .history-item:hover { background: var(--bg); }
+  .history-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+  .history-time {
+    font-size: 11px;
+    color: var(--hint);
+    font-family: 'Courier New', monospace;
+  }
+  .history-del {
+    background: none;
+    border: none;
+    color: var(--hint);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+  }
+  .history-del:hover { color: var(--accent); }
+  .history-empty {
+    font-size: 13px;
+    color: var(--hint);
+    text-align: center;
+    padding: 1rem 0;
+    font-style: italic;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .2s;
+    pointer-events: none;
+    font-family: Georgia, serif;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 2rem 0 1rem;
+    color: var(--hint);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    font-size: 11px;
+    color: var(--hint);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color .1s;
+  }
+  .clear-btn:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">N↺</div>
+    <span class="logo-text">Name<span>Loop</span></span>
+  </div>
+  <span class="version">v1.0</span>
+</header>
+
+<!-- SAISIE -->
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div class="section-label" style="margin:0">Prénom et nom</div>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--muted);font-family:'Courier New',monospace;user-select:none">
+      <input type="checkbox" id="doublePrenom" onchange="handleInput()" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer">
+      Double prénom
+    </label>
+  </div>
+  <input class="name-input" id="nameInput" type="text" placeholder="Prénom NOM" autocomplete="off" spellcheck="false">
+  <div class="input-divider"></div>
+  <div class="parsed-row" id="parsedRow" style="display:none">
+    <span>→</span>
+    <span class="parsed-chip">Prénom : <strong id="parsedPrenom">–</strong></span>
+    <span class="parsed-chip">Nom : <strong id="parsedNom">–</strong></span>
+    <span class="parsed-chip">Initiale : <strong id="parsedIni">–</strong></span>
+  </div>
+</div>
+
+<!-- FORMATS -->
+<div class="card">
+  <div class="section-label">Format</div>
+  <div class="formats-grid" id="formatsGrid"></div>
+</div>
+
+<!-- RÉSULTAT -->
+<div class="card" id="resultCard" style="display:none">
+  <div class="section-label">Résultat — copié dans le presse-papiers</div>
+  <div class="result-area">
+    <div class="result-box">
+      <span class="result-value" id="resultValue">–</span>
+      <button class="copy-btn" id="mainCopyBtn" onclick="copyMain()">Copier</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOUS LES FORMATS -->
+<div class="card" id="allCard" style="display:none">
+  <div class="section-label">Toutes les variantes</div>
+  <div class="all-results" id="allResults"></div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+const FORMATS = [
+  { id:'lower',      label:'minuscules',        fn:(p,n)=>(p+' '+n).toLowerCase() },
+  { id:'upper',      label:'MAJUSCULES',         fn:(p,n)=>(p+' '+n).toUpperCase() },
+  { id:'title',      label:'Maj. chaque mot',    fn:(p,n)=>capitalize(p)+' '+capitalize(n) },
+  { id:'prenomnom',  label:'prenomnom',          fn:(p,n)=>clean(p)+clean(n) },
+  { id:'prenom_nom', label:'prenom.nom',         fn:(p,n)=>clean(p)+'.'+clean(n) },
+  { id:'pnom',       label:'p.nom',              fn:(p,n)=>clean(p)[0]+'.'+clean(n) },
+  { id:'pnom2',      label:'pnom',               fn:(p,n)=>clean(p)[0]+clean(n) },
+];
+
+let currentPrenom = '', currentNom = '', selectedFormat = 'prenomnom';
+
+function removeAccents(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9.\-_]/g,'');
+}
+function clean(s) { return removeAccents(s).toLowerCase(); }
+function capitalize(s) { return s.split(/\s+/).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' '); }
+
+function parseName(text) {
+  text = text.trim();
+  if (!text) return { prenom:'', nom:'' };
+  const parts = text.split(/\s+/);
+  const isDouble = document.getElementById('doublePrenom').checked;
+  if (parts.length === 1) return { prenom: parts[0], nom: parts[0] };
+  if (isDouble && parts.length >= 3) {
+    return { prenom: parts.slice(0, -1).join(' '), nom: parts[parts.length - 1] };
+  }
+  return { prenom: parts[0], nom: parts.slice(1).join(' ') };
+}
+
+function buildFormats() {
+  const grid = document.getElementById('formatsGrid');
+  grid.innerHTML = '';
+  FORMATS.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'format-btn' + (f.id === selectedFormat ? ' active' : '');
+    btn.dataset.id = f.id;
+    const preview = currentPrenom
+      ? `<span class="format-preview accent">${f.fn(currentPrenom, currentNom || currentPrenom)}</span>`
+      : `<span class="format-preview">${f.label}</span>`;
+    btn.innerHTML = `<span class="format-label">${f.label}</span>${preview}`;
+    btn.onclick = () => selectFormat(f.id);
+    grid.appendChild(btn);
+  });
+}
+
+function selectFormat(id) {
+  selectedFormat = id;
+  buildFormats();
+  updateResult();
+}
+
+function updateResult() {
+  const p = currentPrenom, n = currentNom || currentPrenom;
+  if (!p) {
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('allCard').style.display = 'none';
+    return;
+  }
+  const fmt = FORMATS.find(f => f.id === selectedFormat);
+  const result = fmt.fn(p, n);
+  document.getElementById('resultValue').textContent = result;
+  document.getElementById('resultCard').style.display = 'block';
+
+  // All formats
+  const allDiv = document.getElementById('allResults');
+  allDiv.innerHTML = '';
+  FORMATS.forEach(f => {
+    const val = f.fn(p, n);
+    const row = document.createElement('div');
+    row.className = 'all-row';
+    row.innerHTML = `
+      <span class="all-label">${f.label}</span>
+      <span class="all-value">${val}</span>
+      <button class="copy-small" onclick="copyVal('${val}', this)">${f.id === selectedFormat ? '✓ principal' : 'copier'}</button>`;
+    allDiv.appendChild(row);
+  });
+  document.getElementById('allCard').style.display = 'block';
+}
+
+function copyMain() {
+  const val = document.getElementById('resultValue').textContent;
+  copyVal(val, document.getElementById('mainCopyBtn'));
+}
+
+function copyVal(text, btn) {
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const orig = btn.textContent;
+  btn.textContent = '✓ copié';
+  btn.classList.add('copied');
+  showToast(`"${text}" copié`);
+  setTimeout(()=>{ btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function handleInput() {
+  const isDouble = document.getElementById('doublePrenom').checked;
+  document.getElementById('nameInput').placeholder = isDouble ? 'Prénom1 Prénom2 NOM' : 'Prénom NOM';
+  const raw = document.getElementById('nameInput').value;
+  const { prenom, nom } = parseName(raw);
+  currentPrenom = prenom;
+  currentNom = nom;
+  const hasParsed = prenom && nom && nom !== prenom;
+  document.getElementById('parsedRow').style.display = prenom ? 'flex' : 'none';
+  document.getElementById('parsedPrenom').textContent = prenom || '–';
+  document.getElementById('parsedNom').textContent = nom && nom !== prenom ? nom : '–';
+  document.getElementById('parsedIni').textContent = prenom ? removeAccents(prenom)[0].toLowerCase() : '–';
+  buildFormats();
+  updateResult();
+  if (raw.trim() && document.getElementById('resultCard').style.display === 'block') {
+    const fmt = FORMATS.find(f=>f.id===selectedFormat);
+    if (fmt) {
+      navigator.clipboard.writeText(fmt.fn(currentPrenom, currentNom||currentPrenom)).catch(()=>{});
+    }
+  }
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && currentPrenom) { copyMain(); }
+  if (e.key === 'Escape') {
+    document.getElementById('nameInput').value = '';
+    currentPrenom = ''; currentNom = '';
+    buildFormats(); updateResult();
+    document.getElementById('parsedRow').style.display = 'none';
+  }
+});
+
+document.getElementById('nameInput').addEventListener('input', handleInput);
+
+// ── INIT ──
+buildFormats();
+</script>
+</body>
+</html>
